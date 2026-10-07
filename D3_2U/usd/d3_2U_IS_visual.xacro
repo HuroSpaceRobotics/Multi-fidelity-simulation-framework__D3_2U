@@ -1,0 +1,136 @@
+<?xml version="1.0" ?>
+
+<robot name="d3_2U" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:property name="damping_value" value="0.0" />
+    <xacro:property name="friction_value" value="0.0" />
+
+    
+    <xacro:property name="num_links" value="34" />  <!-- Number of boom links -->
+    <xacro:property name="boom_indices" value="${list(python.range(1, num_links+1))}" />    <!-- Define list of indices for recursive iteration -->
+
+
+    <!-- Recursive macro to generate boom links -->
+    <xacro:macro name="boom_link" params="boom_id items parent_link mesh_file x y z roll pitch yaw">
+        <xacro:if value="${items}">
+            
+            <xacro:property name="idx" value="${items.pop(0)}"/>    
+
+            <!-- Boom Link -->
+            <link name="d3_boom_${boom_id}_p${idx}_link">
+                <visual>
+                    <origin xyz="0 0 0" rpy="0 0 0" />
+                    <geometry>
+                        <mesh filename="/home/huro/Documentos/IsaacLab/source/isaaclab_tasks/isaaclab_tasks/manager_based/my/D3_2U/usd/meshes/${mesh_file}.stl" scale="0.1 0.1 0.1"/>
+                    </geometry>
+                </visual>
+                <collision>
+                    <origin xyz="0 0 0" rpy="0 0 0" />
+                    <geometry>
+                        <box size= "0.001 0.001 0.001" />
+                    </geometry>
+                </collision>
+                <inertial>
+                    <mass value="0.00685" /> <!--0.00977412" /-->
+                    <inertia ixx="6.760695495242709e-06" ixy="0.0" ixz="0.0" iyy="7.584407995242708e-06" iyz="0" izz="8.248541666666666e-07" />
+                </inertial>
+            </link>
+
+            <!-- Boom Joint -->
+            <joint name="d3_boom_${boom_id}_p${idx}_joint" type="prismatic">
+                <parent link="${parent_link}"/>
+                <child link="d3_boom_${boom_id}_p${idx}_link"/>
+                <origin xyz="${x} ${y} ${z}" rpy="${roll} ${pitch} ${yaw}" />
+                <axis xyz="0 0 -1" />
+                <limit lower="0.0" upper="0.108823529" effort="10.0" velocity="0.02" />
+                <!-- <limit lower="0.0" upper="0.108823529" effort="0.5" velocity="0.01" /> -->
+                <dynamics damping="${damping_value}" friction="${friction_value}" />
+            </joint>
+
+            <!-- Recursive call to itself -->
+            <xacro:boom_link boom_id="${boom_id}" items="${list(items)}" parent_link="d3_boom_${boom_id}_p${idx}_link" mesh_file="${mesh_file}" x="0.0" y="0.0" z="0.0" roll="0.0" pitch="0.0" yaw="0.0" />
+        </xacro:if>
+    </xacro:macro>
+
+    <xacro:macro name="boom_master" params="id x y z roll pitch yaw">
+        <!-- <link  name="d3_boom_${id}_link"/> -->
+
+        <link name="d3_boom_${id}_link">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size= "0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size= "0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+            <inertial>
+                <!-- <mass value="0.2329" />  -->
+                <mass value="0.0" />
+                <inertia ixx="0.26570010274166667" ixy="0.0" ixz="0.0" iyy="0.26572810896666665" iyz="0" izz="2.8045041666666665e-05" />
+            </inertial>
+        </link>
+
+        <joint name="d3_boom_${id}_joint" type="prismatic">
+            <parent link="cubesat2U_link"/>
+            <child  link="d3_boom_${id}_link"/>
+            <origin xyz="${x} ${y} ${z}" rpy="${roll} ${pitch} ${yaw}"/>
+            <axis  xyz="0 0 1"/>
+            <limit lower="0.0" upper="3.7" effort="10.0" velocity="0.02"/>
+        </joint>
+    </xacro:macro>
+
+
+
+    <!-- MODEL -->
+    <link name="cubesat2U_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="/home/huro/Documentos/IsaacLab/source/isaaclab_tasks/isaaclab_tasks/manager_based/my/D3_2U/usd/meshes/Cubesat_2U.stl"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <mesh filename="/home/huro/Documentos/IsaacLab/source/isaaclab_tasks/isaaclab_tasks/manager_based/my/D3_2U/usd/meshes/Cubesat_2U.stl"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <!-- <mass value="1.069" /> -->
+            <mass value="3.0" />
+            <inertia ixx="0.004454166666666668" ixy="0.0" ixz="0.0" iyy="0.004454166666666668" iyz="0" izz="0.001781666666666667" />
+        </inertial>
+    </link>
+
+    <!-- -->
+    <!-- BOOM 1 -->
+    <!-- -->
+    <xacro:boom_link boom_id="1" items="${list(boom_indices)}" parent_link="cubesat2U_link" mesh_file="D3_f_thick_subpart" x="-0.052260667" y="-0.062780161" z="0.025" roll="0.0" pitch="-1.5708" yaw="-0.349066" />
+    <xacro:boom_master id="1" x="0.05" y="-0.1" z="0.025" roll="0.0" pitch="1.5708" yaw="-0.349066" />
+  
+
+    <!-- -->
+    <!-- BOOM 2 -->
+    <!-- -->
+    <xacro:boom_link boom_id="2" items="${list(boom_indices)}" parent_link="cubesat2U_link" mesh_file="D3_f_thick_subpart" x="-0.025" y="-0.062780161" z="-0.052260667" roll="-0.349066" pitch="3.14159" yaw="0" />
+    <xacro:boom_master id="2" x="-0.025" y="-0.1" z="0.05" roll="0.349066" pitch="0.0" yaw="0.0" />
+    
+
+    <!-- -->
+    <!-- BOOM 3 -->
+    <!-- -->
+    <xacro:boom_link boom_id="3" items="${list(boom_indices)}" parent_link="cubesat2U_link" mesh_file="D3_f_thick_subpart" x="0.052260667" y="-0.062780161" z="-0.025" roll="0.0" pitch="1.5708" yaw="0.349066" />
+    <xacro:boom_master id="3" x="-0.05" y="-0.1" z="-0.025" roll="0.0" pitch="-1.5708" yaw="0.349066" />
+  
+
+    <!-- -->
+    <!-- BOOM 4 -->
+    <!-- -->
+    <xacro:boom_link boom_id="4" items="${list(boom_indices)}" parent_link="cubesat2U_link" mesh_file="D3_f_thick_subpart" x="0.025" y="-0.062780161" z="0.052260667" roll="-0.349066" pitch="0.0" yaw="0.0" />
+    <xacro:boom_master id="4" x="0.025" y="-0.1" z="-0.05" roll="0.349066" pitch="3.14159" yaw="0" />
+
+</robot>
